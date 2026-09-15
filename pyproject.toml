@@ -1,0 +1,30 @@
+[project]
+name = "rag-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "chromadb>=1.5.0,<2.0.0",
+    "fastapi>=0.141.1",
+    "gitpython>=3.1.62",
+    "groq>=1.7.0",
+    "httpx>=0.28.1",
+    "onnxruntime>=1.17.0,<1.24",
+    "pydantic>=2.13.5",
+    "python-dotenv>=1.2.3",
+    "rank-bm25>=0.2.2",
+    "sentence-transformers>=2.7.0,<6.0.0",
+    "torch==2.2.2",
+    "transformers<4.50.0",
+    "uvicorn[standard]>=0.53.0",
+    "numpy>=1.24,<2",
+]
+
+[dependency-groups]
+dev = ["pytest>=9.1.1"]
+
+[tool.uv]
+required-environments = [
+    "python_version == '3.12' and sys_platform == 'darwin' and platform_machine == 'x86_64'",
+]
