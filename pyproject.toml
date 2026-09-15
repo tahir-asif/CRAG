@@ -28,3 +28,8 @@ dev = ["pytest>=9.1.1"]
 required-environments = [
     "python_version == '3.12' and sys_platform == 'darwin' and platform_machine == 'x86_64'",
 ]
+
+# so neovim won't complain about imports not being able to be resolved
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
