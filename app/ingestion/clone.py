@@ -4,12 +4,7 @@ from pathlib import Path
 import git
 
 from app.config import REPO_CACHE_DIR
-
-
-class IngestionError(Exception):
-    def __init__(self, message: str, status_code: int = 500):
-        super().__init__(message)
-        self.status_code = status_code
+from app.exceptions import IngestionError
 
 
 def clone_repo(repo_url: str, branch: str | None = None) -> Path:
