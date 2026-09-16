@@ -17,6 +17,7 @@ from app.models import (
     QueryResponse,
     RetrievedChunk,
 )
+from app.retrieval.vector_search import vector_search
 
 # Logging setup
 setup_logging()
@@ -79,7 +80,10 @@ def query(req: QueryRequest):
     repo_name = _resolve_repo(req.repo_name)
 
     # Chunks
-    chunks = _STUB_STORE[repo_name][: req.rerank_top_k]
+    try:
+        chunks = vector_search(repo_name, req.question, top_k=req.top_k)
+    except ValueError:
+        raise HTTPException(404, f"Repo '{repo_name}' not found.")
 
     # Answer
     try:
