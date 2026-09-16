@@ -10,6 +10,11 @@ def main():
     sub = p.add_subparsers(dest="cmd", required=True)
     pi = sub.add_parser("ingest")
     pi.add_argument("repo_url")
+    pi.add_argument(
+        "--branch",
+        default=None,
+        help="Branch to clone (default: repo's default branch)",
+    )
     pi.add_argument("--ext", nargs="+", default=[".py"])
     pi.set_defaults(func=cmd_ingest)
     pq = sub.add_parser("query")
@@ -22,9 +27,10 @@ def main():
 
 
 def cmd_ingest(args):
-    r = requests.post(
-        f"{BASE}/ingest", json={"repo_url": args.repo_url, "file_extensions": args.ext}
-    )
+    body = {"repo_url": args.repo_url, "file_extensions": args.ext}
+    if args.branch:
+        body["branch"] = args.branch
+    r = requests.post(f"{BASE}/ingest", json=body)
     r.raise_for_status()
     d = r.json()
     print(

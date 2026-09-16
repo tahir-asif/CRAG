@@ -3,9 +3,16 @@ from pydantic import BaseModel, Field
 
 class IngestRequest(BaseModel):
     repo_url: str = Field(..., description="Public GitHub repo URL")
-    branch: str = Field("main", description="Branch to clone")
-    file_extensions: list[str] = Field(default=[".py"], description="File extensions to index")
-    path_filter: str | None = Field(None, description="Optional subdirectory, e.g. 'src/'")
+    branch: str | None = Field(
+        None,
+        description="Branch to clone. If omitted, uses the repo's default branch.",
+    )
+    file_extensions: list[str] = Field(
+        default=[".py"], description="File extensions to index"
+    )
+    path_filter: str | None = Field(
+        None, description="Optional subdirectory, e.g. 'src/'"
+    )
 
 
 class IngestResponse(BaseModel):
@@ -41,7 +48,9 @@ class QueryRequest(BaseModel):
     repo_name: str | None = None
     top_k: int = 10
     rerank_top_k: int = 5
-    api_key: str | None = Field(None, description="Optional Groq API key. Falls back to server default.")
+    api_key: str | None = Field(
+        None, description="Optional Groq API key. Falls back to server default."
+    )
 
 
 class QueryResponse(BaseModel):
