@@ -5,6 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.exceptions import LLMError
 from app.generation.llm import generate_answer
+from app.ingestion.chunker import chunk_repo
+from app.ingestion.clone import IngestionError, clone_repo
+from app.ingestion.indexer import index_chunks
 from app.logging_config import setup_logging
 from app.models import (
     Citation,
@@ -42,37 +45,28 @@ def list_repos():
 
 @app.post("/ingest", response_model=IngestResponse)
 def ingest(req: IngestRequest):
-    logger.info("Ingesting repo: %s", req.repo_url)
-    # currently is a "fake" ingest for testing
-    repo_name = req.repo_url.rstrip("/").split("/")[-1]
-    fake_chunks = [
-        RetrievedChunk(
-            content=f"# Stub content from {repo_name}\nprint('hello')",
-            file_path="stub.py",
-            start_line=1,
-            end_line=2,
-            chunk_type="module",
-            name=None,
-            score=1.0,
-            source="stub",
-        ),
-        RetrievedChunk(
-            content="def authenticate(user, password):\n    return user == 'admin'",
-            file_path="auth.py",
-            start_line=10,
-            end_line=11,
-            chunk_type="function",
-            name="authenticate",
-            score=1.0,
-            source="stub",
-        ),
-    ]
-    _STUB_STORE[repo_name] = fake_chunks
-    logger.info("Indexed %s: %d chunks", repo_name, len(fake_chunks))
+    logger.info("Ingesting repo: %s (branch=%s)", req.repo_url, req.branch)
+
+    try:
+        repo_path = clone_repo(req.repo_url, req.branch)
+    except IngestionError as e:
+        raise HTTPException(e.status_code, str(e))
+
+    chunks = chunk_repo(repo_path, req.file_extensions)
+    index_chunks(chunks, repo_path.name)
+
+    files_indexed = len({c.file_path for c in chunks})
+    logger.info(
+        "Indexed %s: %d files, %d chunks",
+        repo_path.name,
+        files_indexed,
+        len(chunks),
+    )
+
     return IngestResponse(
-        repo_name=repo_name,
-        files_indexed=1,
-        chunks_created=len(fake_chunks),
+        repo_name=repo_path.name,
+        files_indexed=len({c.file_path for c in chunks}),
+        chunks_created=len(chunks),
         status="ok",
     )
 
