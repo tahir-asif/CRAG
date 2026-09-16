@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class IngestRequest(BaseModel):
@@ -57,3 +57,15 @@ class QueryResponse(BaseModel):
     answer: str
     citations: list[Citation]
     retrieved_chunks: list[RetrievedChunk]
+
+
+class ChunkMetadata(BaseModel):
+    """Validates the metadata shape for chunks."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    file_path: str
+    start_line: int
+    end_line: int
+    chunk_type: str
+    name: str = ""
