@@ -25,19 +25,21 @@ def generate_answer(
 
 
 def _build_prompt(question: str, chunks: list[RetrievedChunk]) -> str:
-    parts = []
-    for c in chunks:
-        header = f"File: {c.file_path}, Lines {c.start_line}-{c.end_line}"
-        if c.name:
-            header += f", {c.chunk_type} `{c.name}`"
-        parts.append(f"---\n{header}\n{c.content}\n---")
-    context = "\n".join(parts)
+    numbered = []
+    for i, c in enumerate(chunks):
+        numbered.append(
+            f"[{i + 1}] {c.file_path}:{c.start_line}-{c.end_line}\n{c.content}"
+        )
+    context = "\n\n".join(numbered)
+
     return (
-        "You are a code assistant. Answer the question using ONLY the code "
-        "snippets below. Cite files and line numbers for every claim. If the "
-        "answer is not in the snippets, say you don't know.\n\n"
-        f"Code snippets:\n{context}\n\n"
-        f"Question: {question}\nAnswer:"
+        "Answer the question using ONLY the code snippets below.\n"
+        "Return a JSON object with two keys:\n"
+        '  "answer": your answer as a string\n'
+        '  "cited_indices": list of snippet numbers you actually used\n\n'
+        f"Snippets:\n{context}\n\n"
+        f"Question: {question}\n"
+        "Respond with JSON only:"
     )
 
 

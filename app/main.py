@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.exceptions import LLMError
+from app.exceptions import LLMError, RetrievalError
 from app.generation.llm import generate_answer
 from app.ingestion.chunker import chunk_repo
 from app.ingestion.clone import IngestionError, clone_repo
@@ -17,7 +17,9 @@ from app.models import (
     QueryResponse,
     RetrievedChunk,
 )
-from app.retrieval.vector_search import vector_search
+from app.retrieval.hybrid import hybrid_search
+from app.retrieval.reranker import rerank
+from app.vector_store import list_collections
 
 # Logging setup
 setup_logging()
@@ -30,9 +32,6 @@ app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
 
-# Global storage
-_STUB_STORE: dict[str, list[RetrievedChunk]] = {}
-
 
 @app.get("/health")
 def health():
@@ -41,7 +40,7 @@ def health():
 
 @app.get("/repos")
 def list_repos():
-    return {"repos": list(_STUB_STORE.keys())}
+    return {"repos": list_collections()}
 
 
 @app.post("/ingest", response_model=IngestResponse)
@@ -50,11 +49,11 @@ def ingest(req: IngestRequest):
 
     try:
         repo_path = clone_repo(req.repo_url, req.branch)
+        chunks = chunk_repo(repo_path, req.file_extensions)
+        index_chunks(chunks, repo_path.name)
     except IngestionError as e:
+        logger.warning("Ingestion failed for %s: %s", req.repo_url, e)
         raise HTTPException(e.status_code, str(e))
-
-    chunks = chunk_repo(repo_path, req.file_extensions)
-    index_chunks(chunks, repo_path.name)
 
     files_indexed = len({c.file_path for c in chunks})
     logger.info(
@@ -75,25 +74,57 @@ def ingest(req: IngestRequest):
 @app.post("/query", response_model=QueryResponse)
 def query(req: QueryRequest):
     logger.info("Query: %r (repo=%s)", req.question[:80], req.repo_name)
-    if not _STUB_STORE:
-        raise HTTPException(400, "No repos ingested. Call /ingest first.")
+
     repo_name = _resolve_repo(req.repo_name)
 
-    # Chunks
-    try:
-        chunks = vector_search(repo_name, req.question, top_k=req.top_k)
-    except ValueError:
-        raise HTTPException(404, f"Repo '{repo_name}' not found.")
+    chunks = _retrieve_chunks(repo_name, req.question, req.top_k, req.rerank_top_k)
+    answer = _generate_answer(req.question, chunks, req.api_key)
+    citations = _generate_citations(chunks)
 
-    # Answer
+    logger.info("Returned %d citations for %r", len(citations), req.question[:80])
+    return QueryResponse(answer=answer, citations=citations, retrieved_chunks=chunks)
+
+
+def _resolve_repo(requested: str | None) -> str:
+    available = list_collections()
+
+    if not available:
+        raise HTTPException(400, "No repos ingested. Call /ingest first.")
+    if requested is None:
+        return available[0]
+    if requested not in available:
+        raise HTTPException(
+            404, f"Repo '{requested}' not found. Available: {available}"
+        )
+
+    return requested
+
+
+def _retrieve_chunks(
+    repo_name: str, question: str, top_k: int, rerank_top_k: int
+) -> list[RetrievedChunk]:
     try:
-        answer = generate_answer(req.question, chunks, api_key=req.api_key)
+        candidates = hybrid_search(repo_name, question, top_k)
+        chunks = rerank(question, candidates, rerank_top_k)
+    except RetrievalError as e:
+        logger.error("Retrieval failed for %s: %s", repo_name, e)
+        raise HTTPException(500, "Retrieval pipeline failed.")
+
+    return chunks
+
+
+def _generate_answer(
+    question: str, chunks: list[RetrievedChunk], api_key: str | None
+) -> str:
+    try:
+        return generate_answer(question, chunks, api_key)
     except LLMError as e:
-        logger.warning("LLM error for query %r: %s", req.question[:80], e)
+        logger.warning("LLM error: %s", e)
         raise HTTPException(e.status_code, str(e))
 
-    # Citations
-    citations = [
+
+def _generate_citations(chunks: list[RetrievedChunk]) -> list[Citation]:
+    return [
         Citation(
             file_path=c.file_path,
             start_line=c.start_line,
@@ -102,16 +133,3 @@ def query(req: QueryRequest):
         )
         for c in chunks
     ]
-
-    return QueryResponse(answer=answer, citations=citations, retrieved_chunks=chunks)
-
-
-def _resolve_repo(requested: str | None) -> str:
-    if requested is None:
-        return next(iter(_STUB_STORE))
-    if requested not in _STUB_STORE:
-        raise HTTPException(
-            404,
-            f"Repo '{requested}' not found. Available: {list(_STUB_STORE.keys())}",
-        )
-    return requested
