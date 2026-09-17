@@ -1,19 +1,27 @@
 from app.embeddings.embeddings import embed_query
-from app.ingestion.indexer import get_collection
+from app.exceptions import RetrievalError
 from app.models import ChunkMetadata, RetrievedChunk
+from app.vector_store import get_collection
 
 
 def vector_search(
     collection_name: str, query: str, top_k: int = 10
 ) -> list[RetrievedChunk]:
-    collection = get_collection(collection_name)
-    query_embedding = [embed_query(query)]
+    try:
+        collection = get_collection(collection_name)
+    except ValueError as e:
+        raise RetrievalError(
+            f"Collection '{collection_name}' not found.", status_code=404
+        ) from e
 
-    results = collection.query(
-        query_embeddings=query_embedding,
-        n_results=top_k,
-        include=["documents", "metadatas", "distances"],
-    )
+    try:
+        results = collection.query(
+            query_embeddings=[embed_query(query)],
+            n_results=top_k,
+            include=["documents", "metadatas", "distances"],
+        )
+    except (ValueError, RuntimeError, KeyError) as e:
+        raise RetrievalError(f"Vector search failed: {e}") from e
 
     ids = results["ids"][0]
     documents = results["documents"]
@@ -21,7 +29,9 @@ def vector_search(
     distances = results["distances"]
 
     if documents is None or metadatas is None or distances is None:
-        raise RuntimeError("ChromaDB query returned an unexpected shape")
+        raise RetrievalError("ChromaDB query returned an unexpected shape.")
+    if not ids:
+        return []
 
     chunks: list[RetrievedChunk] = []
     for i in range(len(ids)):
