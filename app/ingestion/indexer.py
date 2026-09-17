@@ -1,14 +1,12 @@
 import chromadb
 
-from app.config import CHROMA_PATH
 from app.embeddings.embeddings import embed_texts
 from app.models import RetrievedChunk
-
-_client = chromadb.PersistentClient(path=CHROMA_PATH)
+from app.vector_store import get_or_create_collection
 
 
 def index_chunks(chunks: list[RetrievedChunk], collection_name: str) -> None:
-    collection = _client.get_or_create_collection(collection_name)
+    collection = get_or_create_collection(collection_name)
 
     # Clear existing data for this repo (fresh re-index everytime)
     existing = collection.get()
@@ -31,11 +29,3 @@ def index_chunks(chunks: list[RetrievedChunk], collection_name: str) -> None:
     ]
 
     collection.add(ids=ids, documents=texts, embeddings=embeddings, metadatas=metadatas)
-
-
-def get_collection(name: str):
-    return _client.get_collection(name)
-
-
-def list_collections() -> list[str]:
-    return [c.name for c in _client.list_collections()]
