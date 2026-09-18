@@ -3,7 +3,7 @@ from pathlib import Path
 
 import git
 
-from app.config import REPO_CACHE_DIR
+from app.config import DEFAULT_INGEST_DEPTH, REPO_CACHE_DIR
 from app.exceptions import IngestionError
 
 
@@ -17,9 +17,12 @@ def clone_repo(repo_url: str, branch: str | None = None) -> Path:
 
     try:
         if branch is None:
-            git.Repo.clone_from(repo_url, dest, depth=1)
+            git.Repo.clone_from(repo_url, dest, depth=DEFAULT_INGEST_DEPTH)
         else:
-            git.Repo.clone_from(repo_url, dest, branch=branch, depth=1)
+            git.Repo.clone_from(
+                repo_url, dest, branch=branch, depth=DEFAULT_INGEST_DEPTH
+            )
+
     except git.GitCommandError as e:
         if branch is not None and "Remote branch" in str(e):
             raise IngestionError(
@@ -27,6 +30,7 @@ def clone_repo(repo_url: str, branch: str | None = None) -> Path:
                 status_code=404,
             )
         raise IngestionError(f"Failed to clone {repo_url}: {e}", status_code=400)
+
     except git.NoSuchPathError as e:
         raise IngestionError(f"Invalid destination path: {e}", status_code=500)
 
