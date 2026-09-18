@@ -1,12 +1,12 @@
 import chromadb
 
+from app import vector_store
 from app.embeddings.embeddings import embed_texts
 from app.models import RetrievedChunk
-from app.vector_store import get_or_create_collection
 
 
 def index_chunks(chunks: list[RetrievedChunk], collection_name: str) -> None:
-    collection = get_or_create_collection(collection_name)
+    collection = vector_store.get_or_create_collection(collection_name)
 
     # Clear existing data for this repo (fresh re-index everytime)
     existing = collection.get()

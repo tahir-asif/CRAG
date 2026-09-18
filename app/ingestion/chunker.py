@@ -14,13 +14,16 @@ def chunk_repo(repo_path: Path, extensions: list[str]) -> list[RetrievedChunk]:
             continue
         if file_path.suffix not in extensions:
             continue
+
         rel_path = str(file_path.relative_to(repo_path))
+
         if file_path.suffix == ".py":
             chunks.extend(chunk_python_file(file_path, rel_path))
         else:
             chunks.extend(
                 _line_window_chunks(file_path.read_text(errors="ignore"), rel_path)
             )
+
     return chunks
 
 
