@@ -10,15 +10,17 @@ from app.ingestion.clone import clone_repo
 from app.ingestion.indexer import index_chunks
 from app.logging_config import setup_logging
 from app.models import (
-    Citation,
     IngestRequest,
     IngestResponse,
     QueryRequest,
     QueryResponse,
-    RetrievedChunk,
 )
-from app.retrieval.hybrid import hybrid_search
-from app.retrieval.reranker import rerank
+from app.utilities.query_util import (
+    answer_question,
+    generate_citations,
+    resolve_repo,
+    retrieve_chunks,
+)
 from app.vector_store import list_collections
 
 # Logging setup
@@ -84,61 +86,11 @@ def ingest(req: IngestRequest):
 def query(req: QueryRequest):
     logger.info("Query: %r (repo=%s)", req.question[:80], req.repo_name)
 
-    repo_name = _resolve_repo(req.repo_name)
+    repo_name = resolve_repo(req.repo_name)
 
-    chunks = _retrieve_chunks(repo_name, req.question, req.top_k, req.rerank_top_k)
-    answer = _generate_answer(req.question, chunks, req.api_key)
-    citations = _generate_citations(chunks)
+    chunks = retrieve_chunks(repo_name, req.question, req.top_k, req.rerank_top_k)
+    answer = answer_question(req.question, chunks, req.api_key)
+    citations = generate_citations(chunks)
 
     logger.info("Returned %d citations for %r", len(citations), req.question[:80])
     return QueryResponse(answer=answer, citations=citations, retrieved_chunks=chunks)
-
-
-def _resolve_repo(requested: str | None) -> str:
-    available = list_collections()
-
-    if not available:
-        raise HTTPException(400, "No repos ingested. Call /ingest first.")
-    if requested is None:
-        return available[0]
-    if requested not in available:
-        raise HTTPException(
-            404, f"Repo '{requested}' not found. Available: {available}"
-        )
-
-    return requested
-
-
-def _retrieve_chunks(
-    repo_name: str, question: str, top_k: int, rerank_top_k: int
-) -> list[RetrievedChunk]:
-    try:
-        candidates = hybrid_search(repo_name, question, top_k)
-        chunks = rerank(question, candidates, rerank_top_k)
-    except RetrievalError as e:
-        logger.error("Retrieval failed for %s: %s", repo_name, e)
-        raise HTTPException(500, "Retrieval pipeline failed.")
-
-    return chunks
-
-
-def _generate_answer(
-    question: str, chunks: list[RetrievedChunk], api_key: str | None
-) -> str:
-    try:
-        return generate_answer(question, chunks, api_key)
-    except LLMError as e:
-        logger.warning("LLM error: %s", e)
-        raise HTTPException(e.status_code, str(e))
-
-
-def _generate_citations(chunks: list[RetrievedChunk]) -> list[Citation]:
-    return [
-        Citation(
-            file_path=c.file_path,
-            start_line=c.start_line,
-            end_line=c.end_line,
-            name=c.name,
-        )
-        for c in chunks
-    ]
