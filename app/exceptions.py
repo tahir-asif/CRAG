@@ -1,23 +1,18 @@
 class DomainError(Exception):
     """Base for all application domain errors.
 
-    Every subclass should define `default_message` and `default_status_code`.
-    Any raise site can override either or both via keyword arguments.
+    Every subclass defines default_message and default_status_code.
+    Any raise site can override either or both.
     """
 
     default_message: str = "An unexpected error occurred."
     default_status_code: int = 500
 
-    def __init__(
-        self,
-        message: str | None = None,
-        status_code: int | None = None,
-    ):
+    def __init__(self, message: str | None = None, status_code: int | None = None):
         self.message = message if message is not None else self.default_message
         self.status_code = (
             status_code if status_code is not None else self.default_status_code
         )
-
         super().__init__(self.message)
 
 

@@ -1,23 +1,19 @@
 import logging
 
+from app.adapters.embedder import Embedder
+from app.adapters.reranker import Reranker
+from app.adapters.vector_db import VectorStore
 from app.exceptions import NoReposError, RepoNotFoundError
-from app.generation.llm import generate_answer
+from app.generation.llm import generate_answer as _run_llm
 from app.models import Citation, RetrievedChunk
 from app.retrieval.hybrid import hybrid_search
-from app.retrieval.reranker import rerank
-from app.vector_store import list_collections
+from app.retrieval.rerank import rerank
 
 logger = logging.getLogger(__name__)
 
 
-def resolve_repo(requested: str | None) -> str:
-    """Pick which indexed repo to query.
-
-    Raises:
-        NoReposError: no repos have been indexed.
-        RepoNotFoundError: a specific repo was requested but not indexed.
-    """
-    available = list_collections()
+def resolve_repo(requested: str | None, *, store: VectorStore) -> str:
+    available = store.list_collections()
 
     if not available:
         raise NoReposError()
@@ -33,16 +29,21 @@ def retrieve_chunks(
     question: str,
     top_k: int,
     rerank_top_k: int,
+    *,
+    store: VectorStore,
+    embedder: Embedder,
+    reranker: Reranker,
 ) -> list[RetrievedChunk]:
-    """Hybrid retrieval followed by cross-encoder reranking.
-
-    Raises RetrievalError (propagated from the retrieval layer).
-    """
     logger.info(
-        "Retrieving %s (top_k=%d, rerank_top_k=%d)", repo_name, top_k, rerank_top_k
+        "Retrieving %s (top_k=%d, rerank_top_k=%d)",
+        repo_name,
+        top_k,
+        rerank_top_k,
     )
-    candidates = hybrid_search(repo_name, question, top_k=top_k)
-    return rerank(question, candidates, top_k=rerank_top_k)
+    candidates = hybrid_search(
+        repo_name, question, top_k, store=store, embedder=embedder
+    )
+    return rerank(question, candidates, rerank_top_k, reranker=reranker)
 
 
 def answer_question(
@@ -50,11 +51,7 @@ def answer_question(
     chunks: list[RetrievedChunk],
     api_key: str | None,
 ) -> str:
-    """Call the LLM with the retrieved chunks.
-
-    Raises LLMError (propagated from the generation layer).
-    """
-    return generate_answer(question, chunks, api_key=api_key)
+    return _run_llm(question, chunks, api_key=api_key)
 
 
 def generate_citations(chunks: list[RetrievedChunk]) -> list[Citation]:

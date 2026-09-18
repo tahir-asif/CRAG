@@ -1,34 +1,36 @@
 from rank_bm25 import BM25Okapi
 
+from app.adapters.vector_db import VectorStore
 from app.exceptions import RetrievalError
-from app.models import ChunkMetadata, RetrievedChunk
-from app.vector_store import get_collection
+from app.models import RetrievedChunk
+
+
+def _tokenize(text: str) -> list[str]:
+    """Lowercase, treat underscores as spaces, split on whitespace."""
+    return text.lower().replace("_", " ").split()
 
 
 def bm25_search(
-    collection_name: str, query: str, top_k: int = 10
+    collection_name: str,
+    query: str,
+    top_k: int,
+    *,
+    store: VectorStore,
 ) -> list[RetrievedChunk]:
     try:
-        collection = get_collection(collection_name)
-        all_docs = collection.get(include=["documents", "metadatas"])
+        chunks = store.get_all_chunks(collection_name)
     except ValueError as e:
         raise RetrievalError(
             f"Collection '{collection_name}' not found.", status_code=404
         ) from e
-    except (RuntimeError, KeyError) as e:
+    except RuntimeError as e:
         raise RetrievalError(f"BM25 fetch failed: {e}") from e
 
-    ids = all_docs["ids"]
-    documents = all_docs["documents"]
-    metadatas = all_docs["metadatas"]
-
-    if documents is None or metadatas is None:
-        raise RetrievalError("ChromaDB get() returned an unexpected shape.")
-    if not ids:
+    if not chunks:
         return []
 
     try:
-        corpus = [_tokenize(doc) for doc in documents]
+        corpus = [_tokenize(c.content) for c in chunks]
         bm25 = BM25Okapi(corpus)
         scores = bm25.get_scores(_tokenize(query))
     except (ValueError, TypeError) as e:
@@ -40,23 +42,19 @@ def bm25_search(
         reverse=True,
     )[:top_k]
 
-    chunks: list[RetrievedChunk] = []
+    out: list[RetrievedChunk] = []
     for idx in ranked:
-        meta = ChunkMetadata.model_validate(metadatas[idx])
-        chunks.append(
+        c = chunks[idx]
+        out.append(
             RetrievedChunk(
-                content=documents[idx],
-                file_path=meta.file_path,
-                start_line=meta.start_line,
-                end_line=meta.end_line,
-                chunk_type=meta.chunk_type,
-                name=meta.name or None,
+                content=c.content,
+                file_path=c.file_path,
+                start_line=c.start_line,
+                end_line=c.end_line,
+                chunk_type=c.chunk_type,
+                name=c.name,
                 score=float(scores[idx]),
                 source="bm25",
             )
         )
-    return chunks
-
-
-def _tokenize(text: str) -> list[str]:
-    return text.lower().replace("_", " ").split()
+    return out
