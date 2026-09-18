@@ -1,12 +1,12 @@
 import logging
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from app.exceptions import LLMError, RetrievalError
-from app.generation.llm import generate_answer
+from app.exceptions import DomainError
 from app.ingestion.chunker import chunk_repo
-from app.ingestion.clone import IngestionError, clone_repo
+from app.ingestion.clone import clone_repo
 from app.ingestion.indexer import index_chunks
 from app.logging_config import setup_logging
 from app.models import (
@@ -25,12 +25,26 @@ from app.vector_store import list_collections
 setup_logging()
 logger = logging.getLogger(__name__)
 
+
 # FastAPI & CORS setup
 app = FastAPI(title="Codebase RAG API", version="0.1.0")
 # Currently in development so CORS allows everything
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
+
+
+@app.exception_handler(DomainError)
+async def domain_error_handler(request: Request, exception: DomainError):
+    if exception.status_code >= 500:
+        logger.error("%s: %s", type(exception).__name__, exception)
+    else:
+        logger.warning("%s: %s", type(exception).__name__, exception)
+
+    return JSONResponse(
+        status_code=exception.status_code,
+        content={"detail": str(exception)},
+    )
 
 
 @app.get("/health")
@@ -47,13 +61,9 @@ def list_repos():
 def ingest(req: IngestRequest):
     logger.info("Ingesting repo: %s (branch=%s)", req.repo_url, req.branch)
 
-    try:
-        repo_path = clone_repo(req.repo_url, req.branch)
-        chunks = chunk_repo(repo_path, req.file_extensions)
-        index_chunks(chunks, repo_path.name)
-    except IngestionError as e:
-        logger.warning("Ingestion failed for %s: %s", req.repo_url, e)
-        raise HTTPException(e.status_code, str(e))
+    repo_path = clone_repo(req.repo_url, req.branch)
+    chunks = chunk_repo(repo_path, req.file_extensions)
+    index_chunks(chunks, repo_path.name)
 
     files_indexed = len({c.file_path for c in chunks})
     logger.info(
@@ -62,10 +72,9 @@ def ingest(req: IngestRequest):
         files_indexed,
         len(chunks),
     )
-
     return IngestResponse(
         repo_name=repo_path.name,
-        files_indexed=len({c.file_path for c in chunks}),
+        files_indexed=files_indexed,
         chunks_created=len(chunks),
         status="ok",
     )
