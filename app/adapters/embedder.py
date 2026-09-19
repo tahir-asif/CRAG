@@ -1,8 +1,11 @@
+import logging
 from typing import Protocol
 
 from sentence_transformers import SentenceTransformer
 
 from app.config import EMBEDDING_BATCH_SIZE, EMBEDDING_MODEL
+
+logger = logging.getLogger(__name__)
 
 
 class Embedder(Protocol):
@@ -16,7 +19,9 @@ def build_embedder() -> Embedder:
 
 class SentenceTransformerEmbedder:
     def __init__(self, model_name: str = EMBEDDING_MODEL):
+        logger.info("Loading embedding model %s", model_name)
         self._model = SentenceTransformer(model_name, device="cpu")
+        logger.info("Embedding model loaded")
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:
         return self._model.encode(

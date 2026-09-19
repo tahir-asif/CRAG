@@ -1,8 +1,11 @@
+import logging
 from typing import Protocol
 
 from sentence_transformers import CrossEncoder
 
 from app.config import RERANKER_MODEL
+
+logger = logging.getLogger(__name__)
 
 
 class Reranker(Protocol):
@@ -10,6 +13,7 @@ class Reranker(Protocol):
 
 
 def build_reranker() -> Reranker:
+    logger.info("Getting reranker.")
     return CrossEncoderReranker()
 
 

@@ -1,3 +1,4 @@
+import logging
 import shutil
 from pathlib import Path
 
@@ -6,8 +7,11 @@ import git
 from app.config import DEFAULT_INGEST_DEPTH, REPO_CACHE_DIR
 from app.exceptions import IngestionError
 
+logger = logging.getLogger(__name__)
+
 
 def clone_repo(repo_url: str, branch: str | None = None) -> Path:
+    logger.info("Cloning %s (branch=%s)", repo_url, branch or "default")
     repo_name = repo_url.rstrip("/").split("/")[-1].removesuffix(".git")
     dest = Path(REPO_CACHE_DIR) / repo_name
 
@@ -22,6 +26,7 @@ def clone_repo(repo_url: str, branch: str | None = None) -> Path:
             git.Repo.clone_from(
                 repo_url, dest, branch=branch, depth=DEFAULT_INGEST_DEPTH
             )
+        logger.info("Cloned %s to %s", repo_url, dest)
 
     except git.GitCommandError as e:
         if branch is not None and "Remote branch" in str(e):

@@ -1,25 +1,23 @@
 import logging
-from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi import Depends, FastAPI
 
 from app.adapters.embedder import Embedder
 from app.adapters.reranker import Reranker
 from app.adapters.vector_db import VectorStore
 from app.dependencies import (
-    build_default_dependencies,
     get_embedder,
     get_reranker,
     get_store,
 )
-from app.exceptions import DomainError
+from app.exception_handlers import register_exception_handlers
 from app.ingestion.chunker import chunk_repo
 from app.ingestion.clone import clone_repo
 from app.ingestion.indexer import index_chunks
+from app.lifespan import lifespan
 from app.logging_config import setup_logging
+from app.middleware import register_middleware
 from app.models import (
     IngestRequest,
     IngestResponse,
@@ -37,35 +35,14 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("Building dependencies...")
-    app.state.deps = build_default_dependencies()
-    logger.info("Dependencies ready.")
-    yield
-    app.state.deps = None
-    logger.info("Dependencies released.")
+def create_app() -> FastAPI:
+    app = FastAPI(title="Codebase RAG API", version="0.2.0", lifespan=lifespan)
+    register_middleware(app)
+    register_exception_handlers(app)
+    return app
 
 
-app = FastAPI(title="Codebase RAG API", version="0.2.0", lifespan=lifespan)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-@app.exception_handler(DomainError)
-async def domain_error_handler(request: Request, exc: DomainError):
-    if exc.status_code >= 500:
-        logger.error("%s: %s", type(exc).__name__, exc)
-    else:
-        logger.warning("%s: %s", type(exc).__name__, exc)
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": str(exc)},
-    )
+app = create_app()
 
 
 @app.get("/health")

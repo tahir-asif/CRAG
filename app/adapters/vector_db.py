@@ -1,3 +1,4 @@
+import logging
 from typing import Protocol, cast
 
 import chromadb
@@ -6,6 +7,8 @@ from chromadb.api.types import Embedding, Metadata
 
 from app.config import CHROMA_PATH
 from app.models import Chunk, ChunkMetadata, RetrievedChunk
+
+logger = logging.getLogger(__name__)
 
 
 class VectorStore(Protocol):
@@ -36,6 +39,7 @@ def build_vector_store() -> VectorStore:
     The only place in the codebase that knows which vector DB is used.
     Swap to Qdrant by changing this function.
     """
+    logger.info("Connecting to ChromaDB at %s", CHROMA_PATH)
     return ChromaVectorStore(chromadb.PersistentClient(path=CHROMA_PATH))
 
 
