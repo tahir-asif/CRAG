@@ -24,15 +24,26 @@ dependencies = [
 [dependency-groups]
 dev = ["pytest>=9.1.1"]
 
+
+# BUILD TOOLS (uv) ------------------------------------------------------------
 [tool.uv]
 required-environments = [
     "python_version == '3.12' and sys_platform == 'darwin' and platform_machine == 'x86_64'",
 ]
 
+
+# TESTING ---------------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 markers = ["live: tests that call external APIs (require network + API keys)"]
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated:starlette.exceptions.StarletteDeprecationWarning",
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning:starlette.testclient",
+]
 
+
+# OTHER TOOLS -----------------------------------------------------------------
 # so neovim won't complain about imports not being able to be resolved
 [tool.pyright]
 venvPath = "."

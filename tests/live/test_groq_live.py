@@ -18,8 +18,7 @@ def test_groq_connection():
         model="openai/gpt-oss-120b",
         messages=[{"role": "user", "content": "Reply with exactly: connection works"}],
         temperature=0,
-        max_tokens=20,
+        max_tokens=200,
     )
-    content = response.choices[0].message.content
-    assert content is not None
+    content = response.choices[0].message.content or ""
     assert "connection works" in content.lower()
