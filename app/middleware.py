@@ -47,8 +47,8 @@ def register_middleware(app: FastAPI) -> None:
     # So add CORS first (it runs last), and RequestContext last (runs first).
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=["http://localhost:8000", "http://127.0.0.1:8000"],
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type"],
     )
     app.add_middleware(RequestContextMiddleware)
