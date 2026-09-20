@@ -2,6 +2,7 @@ import logging
 from typing import Annotated
 
 from fastapi import Depends, FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.adapters.embedder import Embedder
 from app.adapters.reranker import Reranker
@@ -114,3 +115,7 @@ def query(
         citations=citations,
         retrieved_chunks=chunks,
     )
+
+
+# keep after endpoints
+app.mount("/", StaticFiles(directory="app/static", html=True), name="frontend")

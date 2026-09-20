@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codebase RAG</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <header>
+    <h1>Codebase RAG</h1>
+    <p>Ask questions about any public GitHub repository.</p>
+    <p class="hint">API docs: <a href="/docs">/docs</a></p>
+  </header>
+
+  <main>
+
+    <section>
+      <h2>Indexed repositories</h2>
+      <ul id="repos-list"><li>Loading…</li></ul>
+    </section>
+
+    <section>
+      <h2>Ingest a repository</h2>
+      <input
+        type="text"
+        id="repo-url"
+        placeholder="https://github.com/owner/repo"
+        autocomplete="off"
+      >
+      <button id="ingest-btn">Ingest</button>
+      <div id="ingest-status" class="status"></div>
+    </section>
+
+    <section>
+      <h2>Ask a question</h2>
+      <select id="query-repo" disabled>
+        <option value="">No repos indexed</option>
+      </select>
+      <textarea
+        id="question"
+        placeholder="How does _______ work?"
+      ></textarea>
+      <button id="ask-btn" disabled>Ask</button>
+      <p class="hint">Tip: press Ctrl+Enter (⌘+Enter) to submit.</p>
+    </section>
+
+    <section id="result" hidden>
+      <h2>Answer</h2>
+      <div id="answer"></div>
+      <h3>Citations</h3>
+      <ul id="citations"></ul>
+    </section>
+
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
