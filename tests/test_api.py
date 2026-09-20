@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from app.exceptions import IngestionError, LLMError
+from app.models import LLMResponse
 
 # --- Health -----------------------------------------------------------------
 
@@ -67,7 +68,10 @@ def test_query_no_repos_returns_400(client):
 def test_query_success(client, sample_repo_path):
     with (
         patch("app.main.clone_repo", return_value=sample_repo_path),
-        patch("app.utilities.query_utils._run_llm", return_value="mocked answer"),
+        patch(
+            "app.utilities.query_utils.generate_answer",
+            return_value=LLMResponse(answer="mocked answer", cited_indices=[]),
+        ),
     ):
         client.post("/ingest", json={"repo_url": "https://github.com/x/y"})
         r = client.post("/query", json={"question": "How does auth work?"})
@@ -79,6 +83,20 @@ def test_query_success(client, sample_repo_path):
     assert body["retrieved_chunks"]
 
 
+def test_query_llm_error_returns_mapped_status(client, sample_repo_path):
+    with (
+        patch("app.main.clone_repo", return_value=sample_repo_path),
+        patch(
+            "app.utilities.query_utils.generate_answer",
+            side_effect=LLMError("rate limited", status_code=429),
+        ),
+    ):
+        client.post("/ingest", json={"repo_url": "https://github.com/x/y"})
+        r = client.post("/query", json={"question": "hi"})
+
+    assert r.status_code == 429
+
+
 def test_query_unknown_repo_returns_404(client, sample_repo_path):
     with patch("app.main.clone_repo", return_value=sample_repo_path):
         client.post("/ingest", json={"repo_url": "https://github.com/x/y"})
@@ -88,17 +106,3 @@ def test_query_unknown_repo_returns_404(client, sample_repo_path):
         json={"question": "hi", "repo_name": "nonexistent"},
     )
     assert r.status_code == 404
-
-
-def test_query_llm_error_returns_mapped_status(client, sample_repo_path):
-    with (
-        patch("app.main.clone_repo", return_value=sample_repo_path),
-        patch(
-            "app.utilities.query_utils._run_llm",
-            side_effect=LLMError("rate limited", status_code=429),
-        ),
-    ):
-        client.post("/ingest", json={"repo_url": "https://github.com/x/y"})
-        r = client.post("/query", json={"question": "hi"})
-
-    assert r.status_code == 429

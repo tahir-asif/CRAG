@@ -4,8 +4,8 @@ from app.adapters.embedder import Embedder
 from app.adapters.reranker import Reranker
 from app.adapters.vector_db import VectorStore
 from app.exceptions import AmbiguousRepoError, NoReposError, RepoNotFoundError
-from app.generation.llm import generate_answer as _run_llm
-from app.models import Citation, RetrievedChunk
+from app.generation.llm import generate_answer
+from app.models import Citation, LLMResponse, RetrievedChunk
 from app.retrieval.hybrid import hybrid_search
 from app.retrieval.rerank import rerank
 
@@ -49,12 +49,12 @@ def retrieve_chunks(
     return rerank(question, candidates, rerank_top_k, reranker=reranker)
 
 
-def answer_question(
+def get_answer(
     question: str,
     chunks: list[RetrievedChunk],
     api_key: str | None,
-) -> str:
-    return _run_llm(question, chunks, api_key=api_key)
+) -> LLMResponse:
+    return generate_answer(question, chunks, api_key=api_key)
 
 
 def generate_citations(chunks: list[RetrievedChunk]) -> list[Citation]:

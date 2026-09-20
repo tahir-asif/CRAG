@@ -1,6 +1,6 @@
 import pytest
 
-from app.exceptions import NoReposError, RepoNotFoundError
+from app.exceptions import AmbiguousRepoError, NoReposError, RepoNotFoundError
 from app.models import Chunk, RetrievedChunk
 from app.utilities import query_utils
 
@@ -78,3 +78,19 @@ def test_retrieve_chunks_pipeline(fake_store, fake_embedder, fake_reranker):
     # Reranker scores by length, so "long" must be first
     assert result[0].name == "long"
     assert all(c.source == "rerank" for c in result)
+
+
+def test_resolve_repo_raises_when_multiple_and_unspecified(fake_store):
+    chunk = Chunk(
+        content="x",
+        file_path="a.py",
+        start_line=1,
+        end_line=1,
+        chunk_type="function",
+        name="f",
+    )
+    fake_store.upsert_chunks("repo1", [chunk], [])
+    fake_store.upsert_chunks("repo2", [chunk], [])
+
+    with pytest.raises(AmbiguousRepoError):
+        query_utils.resolve_repo(None, store=fake_store)

@@ -36,6 +36,11 @@ class RetrievedChunk(Chunk):
     source: str = Field(..., description="vector | bm25 | hybrid | rerank | stub")
 
 
+class LLMResponse(BaseModel):
+    answer: str
+    cited_indices: list[int] = Field(default_factory=list)
+
+
 class Citation(BaseModel):
     file_path: str
     start_line: int

@@ -40,9 +40,6 @@ def _raising_client(exc):
     return client
 
 
-# --- Prompt building --------------------------------------------------------
-
-
 def test_build_prompt_includes_chunk_metadata_and_question():
     chunks = [_chunk("alpha"), _chunk("beta")]
     prompt = llm._build_prompt("How does alpha work?", chunks)
@@ -51,9 +48,6 @@ def test_build_prompt_includes_chunk_metadata_and_question():
     assert "beta.py" in prompt
     assert "How does alpha work?" in prompt
     assert "def alpha(): pass" in prompt
-
-
-# --- Error translation ------------------------------------------------------
 
 
 def test_auth_error_with_user_key_returns_401():
@@ -100,9 +94,6 @@ def test_api_status_error_returns_502_and_includes_code():
     assert "418" in str(info.value)
 
 
-# --- generate_answer edge cases ---------------------------------------------
-
-
 def test_missing_api_key_raises_500(monkeypatch):
     monkeypatch.setattr(llm, "GROQ_API_KEY", None)
     with pytest.raises(LLMError) as info:
@@ -120,3 +111,29 @@ def test_empty_content_raises_502(monkeypatch):
     with pytest.raises(LLMError) as info:
         llm.generate_answer("q", [])
     assert info.value.status_code == 502
+
+
+def test_generate_answer_parses_json(monkeypatch):
+    monkeypatch.setattr(llm, "GROQ_API_KEY", "fake")
+    response = MagicMock()
+    response.choices[
+        0
+    ].message.content = (
+        '{"answer": "The echo function writes.", "cited_indices": [1, 3]}'
+    )
+    monkeypatch.setattr(llm, "_get_response", lambda *a, **k: response)
+
+    result = llm.generate_answer("q", [])
+    assert result.answer == "The echo function writes."
+    assert result.cited_indices == [1, 3]
+
+
+def test_generate_answer_falls_back_on_bad_json(monkeypatch):
+    monkeypatch.setattr(llm, "GROQ_API_KEY", "fake")
+    response = MagicMock()
+    response.choices[0].message.content = "not JSON at all"
+    monkeypatch.setattr(llm, "_get_response", lambda *a, **k: response)
+
+    result = llm.generate_answer("q", [])
+    assert result.answer == "not JSON at all"
+    assert result.cited_indices == []

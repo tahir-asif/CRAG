@@ -1,15 +1,22 @@
+import json
+import logging
+
 import groq
 from groq import Groq
 from groq.types.chat import ChatCompletion
 
 from app.config import GROQ_API_KEY, GROQ_MODEL
 from app.exceptions import LLMError
-from app.models import RetrievedChunk
+from app.models import LLMResponse, RetrievedChunk
+
+logger = logging.getLogger(__name__)
 
 
 def generate_answer(
-    question: str, chunks: list[RetrievedChunk], api_key: str | None = None
-) -> str:
+    question: str,
+    chunks: list[RetrievedChunk],
+    api_key: str | None = None,
+) -> LLMResponse:
     key = api_key or GROQ_API_KEY
     if not key:
         raise LLMError("Server is missing an LLM API key.", status_code=500)
@@ -21,7 +28,18 @@ def generate_answer(
     content = response.choices[0].message.content
     if content is None:
         raise LLMError("LLM returned an empty response.", status_code=502)
-    return content
+
+    try:
+        parsed = json.loads(content)
+        answer = str(parsed.get("answer", "")).strip()
+        if not answer:
+            raise ValueError("empty answer field")
+        raw_indices = parsed.get("cited_indices", [])
+        cited_indices = [int(i) for i in raw_indices if isinstance(i, (int, float))]
+        return LLMResponse(answer=answer, cited_indices=cited_indices)
+    except (json.JSONDecodeError, ValueError, TypeError, AttributeError):
+        logger.warning("LLM did not return parseable JSON; using raw content")
+        return LLMResponse(answer=content, cited_indices=[])
 
 
 def _build_prompt(question: str, chunks: list[RetrievedChunk]) -> str:

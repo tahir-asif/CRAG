@@ -25,8 +25,8 @@ from app.models import (
     QueryResponse,
 )
 from app.utilities.query_utils import (
-    answer_question,
     generate_citations,
+    get_answer,
     resolve_repo,
     retrieve_chunks,
 )
@@ -101,8 +101,26 @@ def query(
         embedder=embedder,
         reranker=reranker,
     )
-    answer = answer_question(req.question, chunks, req.api_key)
-    citations = generate_citations(chunks)
+    llm_response = get_answer(req.question, chunks, req.api_key)
+
+    if llm_response.cited_indices:
+        cited_chunks = [
+            chunks[i] for i in llm_response.cited_indices if 0 <= i < len(chunks)
+        ]
+    else:
+        cited_chunks = chunks
+
+    citations = generate_citations(cited_chunks)
+    logger.info(
+        "Returned %d citations (%d cited of %d retrieved)",
+        len(citations),
+        len(llm_response.cited_indices),
+        len(chunks),
+    )
 
     logger.info("Returned %d citations for %r", len(citations), req.question[:80])
-    return QueryResponse(answer=answer, citations=citations, retrieved_chunks=chunks)
+    return QueryResponse(
+        answer=llm_response.answer,
+        citations=citations,
+        retrieved_chunks=chunks,
+    )
