@@ -3,7 +3,7 @@ import logging
 from app.adapters.embedder import Embedder
 from app.adapters.reranker import Reranker
 from app.adapters.vector_db import VectorStore
-from app.exceptions import NoReposError, RepoNotFoundError
+from app.exceptions import AmbiguousRepoError, NoReposError, RepoNotFoundError
 from app.generation.llm import generate_answer as _run_llm
 from app.models import Citation, RetrievedChunk
 from app.retrieval.hybrid import hybrid_search
@@ -18,7 +18,10 @@ def resolve_repo(requested: str | None, *, store: VectorStore) -> str:
     if not available:
         raise NoReposError()
     if requested is None:
-        return available[0]
+        if len(available) == 1:
+            return available[0]
+        raise AmbiguousRepoError(f"Specify repo name. Ingested repos: {available}")
+
     if requested not in available:
         raise RepoNotFoundError(f"Repo '{requested}' not found. Available: {available}")
     return requested

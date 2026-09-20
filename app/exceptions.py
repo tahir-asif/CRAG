@@ -39,3 +39,8 @@ class NoReposError(DomainError):
 class RepoNotFoundError(DomainError):
     default_message = "Repo not found."
     default_status_code = 404
+
+
+class AmbiguousRepoError(DomainError):
+    default_message = "Multiple repos indexed. Specify a repo name."
+    default_status_code = 400
