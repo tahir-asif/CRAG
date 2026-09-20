@@ -1,0 +1,77 @@
+[
+  {
+    "question": "How does the tqdm class format the progress bar string for display?",
+    "expected_files": ["tqdm/std.py"],
+    "expected_keywords": ["format_meter", "bar_format", "elapsed"]
+  },
+  {
+    "question": "What does the envwrap decorator do in tqdm's utilities module?",
+    "expected_files": ["tqdm/utils.py"],
+    "expected_keywords": ["envwrap", "environment", "prefix"]
+  },
+  {
+    "question": "What is the entry point for tqdm's command line interface?",
+    "expected_files": ["tqdm/cli.py"],
+    "expected_keywords": ["main", "argv", "cli"]
+  },
+  {
+    "question": "What is TMonitor and what problem does it solve?",
+    "expected_files": ["tqdm/_monitor.py"],
+    "expected_keywords": ["TMonitor", "Thread", "monitor"]
+  },
+  {
+    "question": "What is the trange convenience function and how does it work?",
+    "expected_files": ["tqdm/std.py"],
+    "expected_keywords": ["trange", "tqdm", "range"]
+  },
+  {
+    "question": "How does the update method work on a tqdm instance?",
+    "expected_files": ["tqdm/std.py"],
+    "expected_keywords": ["update", "refresh", "n"]
+  },
+  {
+    "question": "How does the refresh method redraw the progress bar?",
+    "expected_files": ["tqdm/std.py"],
+    "expected_keywords": ["refresh", "display", "lock"]
+  },
+  {
+    "question": "How does tqdm clean up when the progress bar is closed?",
+    "expected_files": ["tqdm/std.py"],
+    "expected_keywords": ["close", "display", "leave"]
+  },
+  {
+    "question": "How does set_description update the label shown next to the progress bar?",
+    "expected_files": ["tqdm/std.py"],
+    "expected_keywords": ["set_description", "desc", "refresh"]
+  },
+  {
+    "question": "How does the write classmethod output text above a running progress bar?",
+    "expected_files": ["tqdm/std.py"],
+    "expected_keywords": ["write", "clear", "file"]
+  },
+  {
+    "question": "What are the warning classes defined in tqdm and what is each one used for?",
+    "expected_files": ["tqdm/std.py"],
+    "expected_keywords": ["TqdmWarning", "TqdmDeprecationWarning", "TqdmExperimentalWarning"]
+  },
+  {
+    "question": "What is the status_printer and how does tqdm use it to build the bar output?",
+    "expected_files": ["tqdm/std.py"],
+    "expected_keywords": ["status_printer", "file", "fp_write"]
+  },
+  {
+    "question": "How does the notebook version of tqdm differ from the standard tqdm class?",
+    "expected_files": ["tqdm/notebook.py", "tqdm/std.py"],
+    "expected_keywords": ["tqdm_notebook", "std_tqdm", "display"]
+  },
+  {
+    "question": "How does tqdm integrate with the rich library for progress bar rendering?",
+    "expected_files": ["tqdm/rich.py"],
+    "expected_keywords": ["tqdm_rich", "std_tqdm", "rich"]
+  },
+  {
+    "question": "How does tqdm_asyncio extend the standard tqdm class for async iterables?",
+    "expected_files": ["tqdm/asyncio.py"],
+    "expected_keywords": ["tqdm_asyncio", "std_tqdm", "async"]
+  }
+]

@@ -74,3 +74,20 @@ class ChunkMetadata(BaseModel):
     end_line: int
     chunk_type: str
     name: str = ""
+
+
+class EvalResult(BaseModel):
+    question: str
+    hit_at_5: float
+    hit_at_10: float
+    rr: float
+    keyword_coverage: float | None = None
+
+
+class EvalSummary(BaseModel):
+    n: int
+    hit_at_5: float
+    hit_at_10: float
+    mrr: float
+    keyword_coverage: float | None
+    results: list[EvalResult]
