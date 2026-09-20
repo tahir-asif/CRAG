@@ -106,3 +106,18 @@ def test_query_unknown_repo_returns_404(client, sample_repo_path):
         json={"question": "hi", "repo_name": "nonexistent"},
     )
     assert r.status_code == 404
+
+
+def test_query_with_no_cited_indices_returns_empty_citations(client, sample_repo_path):
+    with (
+        patch("app.main.clone_repo", return_value=sample_repo_path),
+        patch(
+            "app.utilities.query_utils.generate_answer",
+            return_value=LLMResponse(answer="I don't know.", cited_indices=[]),
+        ),
+    ):
+        client.post("/ingest", json={"repo_url": "https://github.com/x/y"})
+        r = client.post("/query", json={"question": "hi"})
+
+    assert r.status_code == 200
+    assert r.json()["citations"] == []

@@ -54,7 +54,11 @@ def _build_prompt(question: str, chunks: list[RetrievedChunk]) -> str:
         "Answer the question using ONLY the code snippets below.\n"
         "Return a JSON object with two keys:\n"
         '  "answer": your answer as a string\n'
-        '  "cited_indices": list of snippet numbers you actually used\n\n'
+        '  "cited_indices": list of snippet numbers whose content you actually used\n\n'
+        "Rules:\n"
+        "- Every factual claim in your answer must reference at least one snippet.\n"
+        "- If you use information from a snippet, its index MUST appear in cited_indices.\n"
+        "- If none of the snippets answer the question, return cited_indices: [].\n\n"
         f"Snippets:\n{context}\n\n"
         f"Question: {question}\n"
         "Respond with JSON only:"

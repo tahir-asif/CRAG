@@ -103,20 +103,10 @@ def query(
     )
     llm_response = get_answer(req.question, chunks, req.api_key)
 
-    if llm_response.cited_indices:
-        cited_chunks = [
-            chunks[i] for i in llm_response.cited_indices if 0 <= i < len(chunks)
-        ]
-    else:
-        cited_chunks = chunks
-
+    cited_chunks = [
+        chunks[i] for i in llm_response.cited_indices if 0 <= i < len(chunks)
+    ]
     citations = generate_citations(cited_chunks)
-    logger.info(
-        "Returned %d citations (%d cited of %d retrieved)",
-        len(citations),
-        len(llm_response.cited_indices),
-        len(chunks),
-    )
 
     logger.info("Returned %d citations for %r", len(citations), req.question[:80])
     return QueryResponse(
