@@ -1,5 +1,5 @@
-from app.eval.metrics import hit_at_k, keyword_coverage, reciprocal_rank
 from app.models import RetrievedChunk
+from scripts.eval.metrics import hit_at_k, keyword_coverage, reciprocal_rank
 
 
 def _chunk(file_path: str) -> RetrievedChunk:

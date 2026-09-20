@@ -4,13 +4,13 @@ from typing import Literal
 from app.adapters.embedder import Embedder
 from app.adapters.reranker import Reranker
 from app.adapters.vector_db import VectorStore
-from app.eval.dataset import QAPair
-from app.eval.metrics import hit_at_k, keyword_coverage, reciprocal_rank
 from app.models import EvalResult, EvalSummary, RetrievedChunk
 from app.retrieval.hybrid import hybrid_search
 from app.retrieval.rerank import rerank
 from app.retrieval.vector_search import vector_search
 from app.utilities.query_utils import get_answer
+from scripts.eval.dataset import QAPair
+from scripts.eval.metrics import hit_at_k, keyword_coverage, reciprocal_rank
 
 logger = logging.getLogger(__name__)
 

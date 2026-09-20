@@ -15,5 +15,8 @@ test:  ## Run the offline test suite
 test-live:  ## Run all tests including live ones (uses Groq tokens)
 	uv run pytest --live -v
 
-eval:  ## Run the eval harness (REPO=click; add GEN=1 to also call the LLM)
-	uv run python -m scripts.run_eval --repo $(REPO) $(if $(GEN),--generate,)
+eval:  ## Run eval (REPO=<name>; VARIANT=<full,no-rerank,vector-only>; GEN=1 to run LLM)
+	uv run python -m scripts.run_eval \
+		--repo $(REPO) \
+		--variant $(or $(VARIANT),full) \
+		$(if $(GEN),--generate,)

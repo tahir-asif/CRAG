@@ -3,9 +3,9 @@ import sys
 from pathlib import Path
 
 from app.dependencies import build_default_dependencies
-from app.eval.dataset import load_qa_pairs
-from app.eval.runner import run_eval
 from app.models import EvalSummary
+from scripts.eval.dataset import load_qa_pairs
+from scripts.eval.runner import run_eval
 
 
 def format_report(summary: EvalSummary, repo: str, variant: str) -> str:
