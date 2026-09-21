@@ -76,17 +76,43 @@ def _get_response(
             max_tokens=1500,
         )
         return response
-    except groq.AuthenticationError:
-        # If the caller passed their own key, it's their fault (401).
-        # Otherwise the server's key is bad (500).
-        raise LLMError("Invalid Groq API key.", status_code=401 if api_key else 500)
-    except groq.RateLimitError:
-        raise LLMError("LLM rate limit reached. Try again shortly.", status_code=429)
-    except groq.APITimeoutError:
-        raise LLMError("LLM request timed out.", status_code=504)
-    except groq.APIConnectionError:
-        raise LLMError("Could not reach the LLM provider.", status_code=503)
+
+    except groq.AuthenticationError as e:
+        raise LLMError(
+            "Invalid Groq API key.",
+            status_code=401 if api_key else 500,
+        ) from e
+
+    except groq.RateLimitError as e:
+        detail = getattr(e, "message", None) or str(e)
+        raise LLMError(
+            f"LLM rate limit reached: {detail}",
+            status_code=429,
+        ) from e
+
+    except groq.APITimeoutError as e:
+        raise LLMError(
+            "LLM request timed out.",
+            status_code=504,
+        ) from e
+
+    except groq.APIConnectionError as e:
+        detail = getattr(e, "message", None) or str(e)
+        raise LLMError(
+            f"Could not reach the LLM provider: {detail}",
+            status_code=503,
+        ) from e
+
     except groq.APIStatusError as e:
-        raise LLMError(f"LLM provider error ({e.status_code}).", status_code=502)
-    except groq.APIError:
-        raise LLMError("Unexpected LLM error.", status_code=502)
+        detail = getattr(e, "message", None) or str(e)
+        raise LLMError(
+            f"LLM provider error ({e.status_code}): {detail}",
+            status_code=502,
+        ) from e
+
+    except groq.APIError as e:
+        detail = getattr(e, "message", None) or str(e)
+        raise LLMError(
+            f"Unexpected LLM error: {detail}",
+            status_code=502,
+        ) from e
