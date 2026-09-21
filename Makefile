@@ -10,7 +10,7 @@ dev:  ## Run dev server with auto-reload (watches app/ only)
 	uv run uvicorn app.main:app --reload --reload-dir app --no-access-log
 
 test:  ## Run the offline test suite
-	uv run pytest -v
+	uv run pytest
 
 test-live:  ## Run all tests including live ones (uses Groq tokens)
 	uv run pytest --live -v
