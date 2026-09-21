@@ -9,7 +9,32 @@ DEFAULT_BASE_URL = os.getenv("RAG_API_URL", "http://localhost:8000")
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(prog="cli")
+    p = argparse.ArgumentParser(
+        prog="cli",
+        description=(
+            "Query public GitHub repositories with natural-language questions.\n"
+            "The server must be running before any command is issued."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "examples:\n"
+            "  Ingest a repository:\n"
+            "    $ uv run python cli.py ingest https://github.com/pallets/click\n"
+            "\n"
+            "  List indexed repositories:\n"
+            "    $ uv run python cli.py repos\n"
+            "\n"
+            "  Ask a question:\n"
+            '    $ uv run python cli.py query "How does the echo function work?" --repo click\n'
+            "\n"
+            "  Point at a different server:\n"
+            "    $ uv run python cli.py --base-url http://192.168.1.10:8000 repos\n"
+            "\n"
+            "  Get help for a specific command:\n"
+            "    $ uv run python cli.py ingest --help\n"
+            "    $ uv run python cli.py query --help\n"
+        ),
+    )
     p.add_argument(
         "--base-url",
         default=DEFAULT_BASE_URL,
@@ -17,15 +42,62 @@ def main() -> None:
     )
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    pi = sub.add_parser("ingest")
+    pi = sub.add_parser(
+        "ingest",
+        help="Clone and index a public GitHub repository.",
+        description=("Clone a public GitHub repository to be queried."),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "examples:\n"
+            "  $ uv run python cli.py ingest https://github.com/pallets/click\n"
+            "  $ uv run python cli.py ingest https://github.com/tqdm/tqdm --ext .py .pyi\n"
+            "  $ uv run python cli.py ingest https://github.com/psf/requests --branch main\n"
+        ),
+    )
     pi.add_argument("repo_url")
-    pi.add_argument("--branch", default=None)
-    pi.add_argument("--ext", nargs="+", default=[".py"])
+    pi.add_argument(
+        "--branch",
+        default=None,
+        metavar="NAME",
+        help=(
+            "Branch to clone. If omitted, uses the repository's default "
+            "branch (usually main or master)."
+        ),
+    )
+    pi.add_argument(
+        "--ext",
+        nargs="+",
+        default=[".py"],
+        metavar="EXT",
+        help="File extensions to index. Default: .py",
+    )
     pi.set_defaults(func=cmd_ingest)
 
-    pq = sub.add_parser("query")
-    pq.add_argument("question")
-    pq.add_argument("--repo", required=True)
+    pq = sub.add_parser(
+        "query",
+        help="Ask a question about an indexed repository.",
+        description=(
+            "Retrieve relevant code chunks from an indexed repository and "
+            "generate an answer with citations. Requires a Groq API key on "
+            "the server (or passed via the request)."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "examples:\n"
+            '  $ uv run python cli.py query "How does echo work?" --repo click\n'
+            '  $ uv run python cli.py query "Where is TMonitor defined?" --repo tqdm\n'
+        ),
+    )
+    pq.add_argument(
+        "question",
+        help="Natural-language question about the repository.",
+    )
+    pq.add_argument(
+        "--repo",
+        required=True,
+        metavar="NAME",
+        help=("Indexed repository to query. Use `repos` to list what's available."),
+    )
     pq.set_defaults(func=cmd_query)
 
     pr = sub.add_parser("repos")
