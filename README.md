@@ -31,7 +31,7 @@ Citations:
 #### Clone the Repo
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/tahir-asif/CRAG
 cd codebase-rag-api
 ```
 
@@ -203,8 +203,6 @@ make test-live     # includes tests that hit GitHub and Groq
 - Tree-sitter chunking for JavaScript, TypeScript, and Go
 - Incremental indexing (only re-embed changed files)
 - Local LLM option (Ollama)
-- Streaming responses
-- Multi-repo queries
 
 ## Ethics
 
