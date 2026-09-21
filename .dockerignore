@@ -1,10 +1,27 @@
 .venv/
 .git/
+.gitignore
 __pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+
+# Not needed in the image
+tests/
+eval_data/
+scripts/
+docs/
+Makefile
+README.md
+
+# Secrets and state — mounted at runtime instead
+.env
+.env.example
 chroma_db/
 repo_cache/
-.pytest_cache/
-.env
-eval/
-tests/
+
+# Editors
+.vscode/
+.idea/
+.DS_Store

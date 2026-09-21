@@ -7,3 +7,4 @@ services:
       - .env
     volumes:
       - ./chroma_db:/app/chroma_db
+      - ./repo_cache:/app/repo_cache
