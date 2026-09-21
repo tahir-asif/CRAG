@@ -1,0 +1,23 @@
+
+=== Eval results for tqdm (variant=vector-only, 15 questions) ===
+
+  Hit Rate@5:   0.867
+  Hit Rate@10:  0.933
+  MRR:          0.622
+
+Per-question:
+  ✓ rr=1.00  How does the tqdm class format the progress bar string for display?
+  ✓ rr=1.00  What does the envwrap decorator do in tqdm's utilities module?
+  ✗ rr=0.00  What is the entry point for tqdm's command line interface?
+  ✓ rr=0.33  What is TMonitor and what problem does it solve?
+  ✓ rr=0.50  What is the trange convenience function and how does it work?
+  ✓ rr=0.50  How does the update method work on a tqdm instance?
+  ✗ rr=0.17  How does the refresh method redraw the progress bar?
+  ✓ rr=0.50  How does tqdm clean up when the progress bar is closed?
+  ✓ rr=0.33  How does set_description update the label shown next to the progress b
+  ✓ rr=1.00  How does the write classmethod output text above a running progress ba
+  ✓ rr=1.00  What are the warning classes defined in tqdm and what is each one used
+  ✓ rr=0.50  What is the status_printer and how does tqdm use it to build the bar o
+  ✓ rr=1.00  How does the notebook version of tqdm differ from the standard tqdm cl
+  ✓ rr=0.50  How does tqdm integrate with the rich library for progress bar renderi
+  ✓ rr=1.00  How does tqdm_asyncio extend the standard tqdm class for async iterabl

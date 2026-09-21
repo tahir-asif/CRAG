@@ -1,0 +1,114 @@
+{
+  "n": 15,
+  "hit_at_5": 0.9333333333333333,
+  "hit_at_10": 0.9333333333333333,
+  "mrr": 0.7555555555555556,
+  "keyword_coverage": null,
+  "results": [
+    {
+      "question": "How does the tqdm class format the progress bar string for display?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 1.0,
+      "keyword_coverage": null
+    },
+    {
+      "question": "What does the envwrap decorator do in tqdm's utilities module?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 0.5,
+      "keyword_coverage": null
+    },
+    {
+      "question": "What is the entry point for tqdm's command line interface?",
+      "hit_at_5": 0.0,
+      "hit_at_10": 0.0,
+      "rr": 0.0,
+      "keyword_coverage": null
+    },
+    {
+      "question": "What is TMonitor and what problem does it solve?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 1.0,
+      "keyword_coverage": null
+    },
+    {
+      "question": "What is the trange convenience function and how does it work?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 0.5,
+      "keyword_coverage": null
+    },
+    {
+      "question": "How does the update method work on a tqdm instance?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 0.3333333333333333,
+      "keyword_coverage": null
+    },
+    {
+      "question": "How does the refresh method redraw the progress bar?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 1.0,
+      "keyword_coverage": null
+    },
+    {
+      "question": "How does tqdm clean up when the progress bar is closed?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 1.0,
+      "keyword_coverage": null
+    },
+    {
+      "question": "How does set_description update the label shown next to the progress bar?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 1.0,
+      "keyword_coverage": null
+    },
+    {
+      "question": "How does the write classmethod output text above a running progress bar?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 0.5,
+      "keyword_coverage": null
+    },
+    {
+      "question": "What are the warning classes defined in tqdm and what is each one used for?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 1.0,
+      "keyword_coverage": null
+    },
+    {
+      "question": "What is the status_printer and how does tqdm use it to build the bar output?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 0.5,
+      "keyword_coverage": null
+    },
+    {
+      "question": "How does the notebook version of tqdm differ from the standard tqdm class?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 1.0,
+      "keyword_coverage": null
+    },
+    {
+      "question": "How does tqdm integrate with the rich library for progress bar rendering?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 1.0,
+      "keyword_coverage": null
+    },
+    {
+      "question": "How does tqdm_asyncio extend the standard tqdm class for async iterables?",
+      "hit_at_5": 1.0,
+      "hit_at_10": 1.0,
+      "rr": 1.0,
+      "keyword_coverage": null
+    }
+  ]
+}
