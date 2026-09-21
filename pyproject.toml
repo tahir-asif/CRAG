@@ -31,6 +31,14 @@ required-environments = [
     "python_version == '3.12' and sys_platform == 'darwin' and platform_machine == 'x86_64'",
 ]
 
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
 
 # TESTING ---------------------------------------------------------------------
 [tool.pytest.ini_options]

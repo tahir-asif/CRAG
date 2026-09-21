@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev && rm -rf /root/.cache/uv
 
 # Pre-download the embedding and reranker models at build time
 # so the first request isn't slow
